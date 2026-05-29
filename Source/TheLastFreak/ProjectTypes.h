@@ -35,8 +35,8 @@ struct FIngredientData
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ingredient")
-    EItemType ItemType = EItemType::None;
+        EItemType ItemType = EItemType::None;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ingredient")
-    EItemState ItemState = EItemState::Raw;
+        EItemState ItemState = EItemState::Raw;
 };

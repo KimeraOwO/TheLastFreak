@@ -31,13 +31,16 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     UNiagaraComponent* StationVFX;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Station Properties")
+    TSubclassOf<AIngredient> ProcessedIngredientClass;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Station Config")
     EStationType StationType;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Station State")
+    UPROPERTY(BlueprintReadWrite, Category = "Station State")
     AIngredient* CurrentIngredient;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Station State")
+    UPROPERTY(BlueprintReadWrite, Category = "Station State")
     bool bIsProcessing;
 
     FTimerHandle ProgressTimerHandle;
@@ -45,6 +48,9 @@ protected:
 public:
     UFUNCTION(BlueprintCallable, Category = "Station Action")
     virtual void Interact(AChefCharacter* Chef);
+
+    UFUNCTION(BlueprintCallable, Category = "Station Action")
+    void SetProcessingFalse() { bIsProcessing = false; }
 
     UFUNCTION(BlueprintImplementableEvent, Category = "Station Action")
     void StartProcessing();

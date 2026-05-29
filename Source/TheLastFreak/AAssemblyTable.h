@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -17,13 +15,13 @@ public:
 protected:
     virtual void BeginPlay() override;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Assembly State")
+    UPROPERTY(BlueprintReadWrite, Category = "Assembly State")
     bool bHasTomato;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Assembly State")
+    UPROPERTY(BlueprintReadWrite, Category = "Assembly State")
     bool bHasLettuce;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Assembly State")
+    UPROPERTY(BlueprintReadWrite, Category = "Assembly State")
     bool bHasMeat;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Assembly Config")
@@ -34,7 +32,9 @@ protected:
 public:
     virtual void Interact(AChefCharacter* Chef) override;
 
+    UFUNCTION(BlueprintCallable, Category = "Assembly Actions")
     void ResetTable();
 
+    UFUNCTION(BlueprintCallable, Category = "Assembly Actions")
     void ClearAssembledBurger();
 };

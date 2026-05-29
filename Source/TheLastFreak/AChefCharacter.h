@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -37,11 +35,17 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
     float InteractionDistance;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+    class UInputMappingContext* DefaultMappingContext;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+    class UInputAction* MoveAction;
+
+    void EnhancedMove(const struct FInputActionValue& Value);
+
 public:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-    void MoveForward(float Value);
-    void MoveRight(float Value);
 
     void InteractAction();
     void DropAction();
@@ -50,8 +54,13 @@ public:
     bool IsHoldingItem() const { return CurrentHeldIngredient != nullptr; }
 
     UFUNCTION(BlueprintCallable, Category = "Chef")
+    void SetCurrentHeldIngredient(AIngredient* NewIngredient) { CurrentHeldIngredient = NewIngredient; }
+
+    UFUNCTION(BlueprintCallable, Category = "Chef")
     AIngredient* GetCurrentHeldIngredient() const { return CurrentHeldIngredient; }
 
     UFUNCTION(BlueprintCallable, Category = "Chef")
     void ReleaseItemToStation();
+
+    USceneComponent* GetHoldingPoint() const { return HoldingPoint; }
 };

@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "AAssemblyTable.h"
 #include "AIngredient.h"
 #include "AChefCharacter.h"
@@ -42,11 +40,6 @@ void AAssemblyTable::Interact(AChefCharacter* Chef)
             bHasTomato = true;
             bItemAccepted = true;
         }
-        else if (Data.ItemType == EItemType::Lettuce && !bHasLettuce)
-        {
-            bHasLettuce = true;
-            bItemAccepted = true;
-        }
         else if (Data.ItemType == EItemType::Meat && !bHasMeat)
         {
             bHasMeat = true;
@@ -58,9 +51,43 @@ void AAssemblyTable::Interact(AChefCharacter* Chef)
             Chef->ReleaseItemToStation();
             HeldItem->Destroy();
 
-            if (bHasTomato && bHasLettuce && bHasMeat)
+            if (bHasTomato && bHasMeat)
             {
+                bIsProcessing = true;
+
+                if (StationVFX)
+                {
+                    StationVFX->Activate();
+                }
+
                 StartProcessing();
+
+                if (GetWorld() && BurgerClass)
+                {
+                    FActorSpawnParameters SpawnParams;
+                    SpawnParams.Owner = this;
+                    SpawnParams.Instigator = GetInstigator();
+
+                    FVector SpawnLocation = ItemPlacementPoint ? ItemPlacementPoint->GetComponentLocation() : GetActorLocation();
+                    FRotator SpawnRotation = GetActorRotation();
+
+                    CurrentIngredient = GetWorld()->SpawnActor<AIngredient>(BurgerClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+                    if (CurrentIngredient)
+                    {
+                        CurrentIngredient->AttachToComponent(ItemPlacementPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+                        UStaticMeshComponent* BurgerMesh = Cast<UStaticMeshComponent>(CurrentIngredient->GetRootComponent());
+                        if (BurgerMesh)
+                        {
+                            BurgerMesh->SetSimulatePhysics(false);
+                            BurgerMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+                        }
+                    }
+                }
+
+                bIsProcessing = false;
+                FinishProcessing();
             }
         }
     }
@@ -74,7 +101,6 @@ void AAssemblyTable::ClearAssembledBurger()
         CurrentIngredient = nullptr;
     }
     ResetTable();
-
 }
 
 void AAssemblyTable::ResetTable()

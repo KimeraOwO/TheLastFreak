@@ -31,5 +31,68 @@ void AWorkStationBase::BeginPlay()
 
 void AWorkStationBase::Interact(AChefCharacter* Chef)
 {
+    if (!Chef) return;
 
+    if (HasItem() && !Chef->IsHoldingItem() && !bIsProcessing)
+    {
+        Chef->SetCurrentHeldIngredient(CurrentIngredient);
+
+        if (Chef->GetCurrentHeldIngredient())
+        {
+            UStaticMeshComponent* IngredientMesh = Cast<UStaticMeshComponent>(Chef->GetCurrentHeldIngredient()->GetRootComponent());
+            if (IngredientMesh)
+            {
+                IngredientMesh->SetSimulatePhysics(false);
+                IngredientMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            }
+
+            Chef->GetCurrentHeldIngredient()->AttachToComponent(
+                Chef->GetHoldingPoint(),
+                FAttachmentTransformRules::SnapToTargetNotIncludingScale
+            );
+        }
+
+        CurrentIngredient = nullptr;
+        return;
+    }
+
+    if (!HasItem() && Chef->IsHoldingItem())
+    {
+        CurrentIngredient = Chef->GetCurrentHeldIngredient();
+
+        if (CurrentIngredient)
+        {
+            Chef->ReleaseItemToStation();
+
+            UStaticMeshComponent* IngredientMesh = Cast<UStaticMeshComponent>(CurrentIngredient->GetRootComponent());
+            if (IngredientMesh)
+            {
+                IngredientMesh->SetSimulatePhysics(false);
+                IngredientMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            }
+
+            CurrentIngredient->AttachToComponent(ItemPlacementPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+            switch (StationType)
+            {
+            case EStationType::CuttingBoard:
+            case EStationType::Oven:
+            {
+                bIsProcessing = true;
+
+                if (StationVFX)
+                {
+                    StationVFX->Activate();
+                }
+
+                StartProcessing();
+            }
+            break;
+
+            default:
+                break;
+            }
+        }
+        return;
+    }
 }

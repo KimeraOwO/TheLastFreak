@@ -1,12 +1,13 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "AChefCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SceneComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Character.h"
 #include "AIngredient.h"
 #include "AWorkStationBase.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 AChefCharacter::AChefCharacter()
 {
@@ -21,6 +22,10 @@ AChefCharacter::AChefCharacter()
     CameraBoom->bUsePawnControlRotation = false;
     CameraBoom->TargetArmLength = 800.f;
     CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
+
+    CameraBoom->bInheritPitch = false;
+    CameraBoom->bInheritYaw = false;
+    CameraBoom->bInheritRoll = false;
 
     TopDownCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
     TopDownCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -40,32 +45,49 @@ AChefCharacter::AChefCharacter()
 void AChefCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+    {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+        {
+            if (DefaultMappingContext)
+            {
+                Subsystem->AddMappingContext(DefaultMappingContext, 0);
+            }
+        }
+    }
 }
 
 void AChefCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    PlayerInputComponent->BindAxis("MoveForward", this, &AChefCharacter::MoveForward);
-    PlayerInputComponent->BindAxis("MoveRight", this, &AChefCharacter::MoveRight);
+    if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+    {
+        if (MoveAction)
+        {
+            EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AChefCharacter::EnhancedMove);
+        }
+    }
 
     PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AChefCharacter::InteractAction);
     PlayerInputComponent->BindAction("Drop", IE_Pressed, this, &AChefCharacter::DropAction);
 }
 
-void AChefCharacter::MoveForward(float Value)
+void AChefCharacter::EnhancedMove(const FInputActionValue& Value)
 {
-    if ((Controller != nullptr) && (Value != 0.0f))
-    {
-        AddMovementInput(FVector::ForwardVector, Value);
-    }
-}
+    FVector2D MovementVector = Value.Get<FVector2D>();
 
-void AChefCharacter::MoveRight(float Value)
-{
-    if ((Controller != nullptr) && (Value != 0.0f))
+    if (Controller != nullptr)
     {
-        AddMovementInput(FVector::RightVector, Value);
+        const FRotator Rotation = Controller->GetControlRotation();
+        const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+        const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+        const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+        AddMovementInput(ForwardDirection, MovementVector.Y);
+        AddMovementInput(RightDirection, MovementVector.X);
     }
 }
 
